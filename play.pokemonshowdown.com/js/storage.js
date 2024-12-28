@@ -513,10 +513,7 @@ Storage.initTestClient = function () {
 	Config.server = Config.server || Config.defaultserver;
 	Storage.whenTeamsLoaded.load();
 
-	var sid = null;
-	if (typeof POKEMON_SHOWDOWN_TESTCLIENT_KEY === 'string') {
-		sid = POKEMON_SHOWDOWN_TESTCLIENT_KEY.replace(/\%2C/g, ',');
-	}
+	var sid = "fakesid%2Cfakesid%2Cfakesid".replace(/\%2C/g, ',');
 
 	Storage.whenAppLoaded(function (app) {
 		var get = $.get;

@@ -63,9 +63,11 @@ const PSLoginServer = new class {
 		if (location.pathname.endsWith('.html')) {
 			url = 'https://' + Config.routes.client + url;
 			// @ts-ignore
-			if (typeof POKEMON_SHOWDOWN_TESTCLIENT_KEY === 'string') {
+			if (POKEMON_SHOWDOWN_TESTCLIENT_KEY && typeof POKEMON_SHOWDOWN_TESTCLIENT_KEY === 'string') {
 				// @ts-ignore
 				data.sid = POKEMON_SHOWDOWN_TESTCLIENT_KEY.replace(/\%2C/g, ',');
+			} else {
+				data.sid = "fakesid%2Cfakesid%2Cfakesid".replace(/\%2C/g, ',');
 			}
 		}
 		return Net(url).get({method: data ? 'POST' : 'GET', body: data}).then(
