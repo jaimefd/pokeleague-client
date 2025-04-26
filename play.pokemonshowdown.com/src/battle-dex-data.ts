@@ -1614,3 +1614,25 @@ if (typeof require === 'function') {
 	global.Item = Item;
 	global.Move = Move;
 }
+
+const TypeGlowStyles: {[id: string]: string} = {
+	normal: "drop-shadow(0 0 5px hsl(60,20%,45%)) drop-shadow(0 0 5px hsl(60,20%,45%)) drop-shadow(0 0 5px hsl(60,20%,45%))",
+	fighting: "drop-shadow(0 0 5px hsl(3,40%,41%)) drop-shadow(0 0 5px hsl(3,40%,41%))",
+	flying: "drop-shadow(0 0 5px hsl(256,81%,76%)) drop-shadow(0 0 5px hsl(256,81%,76%))",
+	poison: "drop-shadow(0 0 5px hsl(301,45%,44%)) drop-shadow(0 0 5px hsl(301,45%,44%))",
+	ground: "drop-shadow(0 0 5px hsl(44,27%,41%)) drop-shadow(0 0 5px hsl(44,27%,41%))",
+	rock: "drop-shadow(0 0 5px hsl(49,35%,41%)) drop-shadow(0 0 5px hsl(49,35%,41%))",
+	bug: "drop-shadow(0 0 5px hsl(67,75%,41%)) drop-shadow(0 0 5px hsl(67,75%,41%))",
+	ghost: "drop-shadow(0 0 5px hsl(262,21%,41%)) drop-shadow(0 0 5px hsl(262,21%,41%))",
+	steel: "drop-shadow(0 0 5px hsl(240,6%,41%)) drop-shadow(0 0 5px hsl(240,6%,41%))",
+	fire: "drop-shadow(0 0 5px hsl(25,85%,56%)) drop-shadow(0 0 5px hsl(25,85%,56%))",
+	water: "drop-shadow(0 0 5px hsl(221,82%,66%)) drop-shadow(0 0 5px hsl(221,82%,66%))",
+	grass: "drop-shadow(0 0 5px hsl(100,30%,41%)) drop-shadow(0 0 5px hsl(100,30%,41%))",
+	electric: "drop-shadow(0 0 5px hsl(48,93%,41%)) drop-shadow(0 0 5px hsl(48,93%,41%))",
+	psychic: "drop-shadow(0 0 5px hsl(342,33%,41%)) drop-shadow(0 0 5px hsl(342,33%,41%))",
+	ice: "drop-shadow(0 0 5px hsl(177,47%,72%)) drop-shadow(0 0 5px hsl(177,47%,72%))",
+	dragon: "drop-shadow(0 0 5px hsl(257,39%,41%)) drop-shadow(0 0 5px hsl(257,39%,41%))",
+	dark: "drop-shadow(0 0 5px hsl(24,23%,36%)) drop-shadow(0 0 5px hsl(24,23%,36%))",
+	fairy: "drop-shadow(0 0 5px hsl(310,41%,41%)) drop-shadow(0 0 5px hsl(310,41%,41%))",
+	stellar: "drop-shadow(0 0 1px hsl(0, 100%, 50%)) drop-shadow(0 0 3px hsl(240, 100%, 50%)) drop-shadow(0 0 3px hsl(120, 100%, 50%))"
+}
