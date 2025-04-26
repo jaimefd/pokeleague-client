@@ -705,7 +705,7 @@ const Dex = new class implements ModdedDex {
 		return num;
 	}
 
-	getPokemonIcon(pokemon: string | Pokemon | ServerPokemon | PokemonSet | null, facingLeft?: boolean) {
+	getPokemonIcon(pokemon: string | Pokemon | ServerPokemon | PokemonSet | null, facingLeft?: boolean, tera?: string) {
 		if (pokemon === 'pokeball') {
 			return `background:transparent url(${Dex.resourcePrefix}sprites/pokemonicons-pokeball-sheet.png) no-repeat scroll -0px 4px`;
 		} else if (pokemon === 'pokeball-statused') {
@@ -731,8 +731,17 @@ const Dex = new class implements ModdedDex {
 
 		let top = Math.floor(num / 12) * 30;
 		let left = (num % 12) * 40;
-		let fainted = ((pokemon as Pokemon | ServerPokemon)?.fainted ? `;opacity:.3;filter:grayscale(100%) brightness(.5)` : ``);
-		return `background:transparent url(${Dex.resourcePrefix}sprites/pokemonicons-sheet.png?v17) no-repeat scroll -${left}px -${top}px${fainted}`;
+		let style = "";
+		if ((pokemon as Pokemon | ServerPokemon)?.fainted) {
+			if (tera) {
+				style = `;opacity:.7;filter:grayscale(100%) brightness(.5) ${TypeGlowStyles[tera.toLowerCase()]}`;
+			} else {
+				style = `;opacity:.3;filter:grayscale(100%) brightness(.5)`;
+			}
+		} else {
+			style = tera? `;filter:${TypeGlowStyles[tera.toLowerCase()]}` : ``;
+		}
+		return `background:transparent url(${Dex.resourcePrefix}sprites/pokemonicons-sheet.png?v17) no-repeat scroll -${left}px -${top}px${style}`;
 	}
 
 	getTeambuilderSpriteData(pokemon: any, gen: number = 0): TeambuilderSpriteData {

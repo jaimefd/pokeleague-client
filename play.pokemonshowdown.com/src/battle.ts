@@ -950,7 +950,6 @@ export class Side {
 
 		pokemon.fainted = true;
 		pokemon.hp = 0;
-		pokemon.terastallized = '';
 		pokemon.details = pokemon.details.replace(/, tera:[a-z]+/i, '');
 		pokemon.searchid = pokemon.searchid.replace(/, tera:[a-z]+/i, '');
 		if (pokemon.side.faintCounter < 100) pokemon.side.faintCounter++;
@@ -1781,6 +1780,7 @@ export class Battle {
 					const side = this.sides[siden];
 					poke.fainted = false;
 					poke.status = '';
+					poke.terastallized = '';
 					this.scene.updateSidebar(side);
 					break;
 				}
