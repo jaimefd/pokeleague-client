@@ -1473,6 +1473,7 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
 		for (const id in textData.Moves) assignData(id, textData.Moves[id]);
 		for (const id in textData.Abilities) assignData(id, textData.Abilities[id]);
 		for (const id in textData.Items) assignData(id, textData.Items[id]);
+		for (const id in textData.Pokedex) assignData(id, textData.Pokedex[id]);
 
 		const buf = 'exports.BattleText = ' + es3stringify(Text) + ';';
 		fs.writeFileSync(`play.pokemonshowdown.com/data/text-${lang}.js`, buf);
