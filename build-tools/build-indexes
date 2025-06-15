@@ -8,6 +8,9 @@ const child_process = require("child_process");
 const rootDir = path.resolve(__dirname, '..');
 process.chdir(rootDir);
 
+const LANGUAGES = ['en', 'es'];
+const DEFAULT_LANGUAGE = 'en';
+
 if (!fs.existsSync('caches/pokemon-showdown')) {
 	child_process.execSync('git clone https://github.com/smogon/pokemon-showdown.git', {
 		cwd: 'caches',
@@ -1325,20 +1328,48 @@ console.log("DONE");
 process.stdout.write("Building `data/pokedex.js`... ");
 
 {
-	const Pokedex = requireNoCache('../caches/pokemon-showdown/dist/data/pokedex.js').Pokedex;
-	for (const id in Pokedex) {
-		const entry = Pokedex[id];
-		if (Dex.data.FormatsData[id]) {
-			// console.log('formatsentry:' + id);
-			const formatsEntry = Dex.data.FormatsData[id];
-			if (formatsEntry.tier) entry.tier = formatsEntry.tier;
-			if (formatsEntry.isNonstandard) entry.isNonstandard = formatsEntry.isNonstandard;
-			if (formatsEntry.unreleasedHidden) entry.unreleasedHidden = formatsEntry.unreleasedHidden;
+	for (const lang of LANGUAGES) {
+		const Pokedex = requireNoCache('../caches/pokemon-showdown/dist/data/pokedex.js').Pokedex;
+
+		let PokedexText = null;
+		try {
+			if (lang !== DEFAULT_LANGUAGE) {
+				PokedexText = requireNoCache(`../caches/pokemon-showdown/dist/data/text/${lang}/pokedex.js`).PokedexText;
+			}
+		} catch {
+			console.log(`No pokedex text found for ${lang}, using English`);
+		}
+
+		for (const id in Pokedex) {
+			const entry = Pokedex[id];
+			if (Dex.data.FormatsData[id]) {
+				// console.log('formatsentry:' + id);
+				const formatsEntry = Dex.data.FormatsData[id];
+				if (formatsEntry.tier) entry.tier = formatsEntry.tier;
+				if (formatsEntry.isNonstandard) entry.isNonstandard = formatsEntry.isNonstandard;
+				if (formatsEntry.unreleasedHidden) entry.unreleasedHidden = formatsEntry.unreleasedHidden;
+			}
+
+			if (PokedexText) {
+				const textEntry = PokedexText[id];
+				if (textEntry) {
+					if (textEntry.name) entry.name = textEntry.name;
+				}
+			}
+		}
+		const buf = 'exports.BattlePokedex = ' + es3stringify(Pokedex) + ';';
+
+		if (lang === DEFAULT_LANGUAGE) {
+			fs.writeFileSync('play.pokemonshowdown.com/data/pokedex.js', buf);
+			fs.writeFileSync('play.pokemonshowdown.com/data/pokedex.json', JSON.stringify(Pokedex));
+		} else {
+			const langDir = `play.pokemonshowdown.com/data/${lang}`;
+			if (!fs.existsSync(langDir)) {
+				fs.mkdirSync(langDir, { recursive: true });
+			}
+			fs.writeFileSync(`play.pokemonshowdown.com/data/${lang}/pokedex.js`, buf);
 		}
 	}
-	const buf = 'exports.BattlePokedex = ' + es3stringify(Pokedex) + ';';
-	fs.writeFileSync('play.pokemonshowdown.com/data/pokedex.js', buf);
-	fs.writeFileSync('play.pokemonshowdown.com/data/pokedex.json', JSON.stringify(Pokedex));
 }
 
 console.log("DONE");
@@ -1350,16 +1381,46 @@ console.log("DONE");
 process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.js`...");
 
 {
-	const Moves = requireNoCache('../caches/pokemon-showdown/dist/data/moves.js').Moves;
-	for (const id in Moves) {
-		const move = Dex.moves.get(Moves[id].name);
-		if (move.desc) Moves[id].desc = move.desc;
-		if (move.shortDesc) Moves[id].shortDesc = move.shortDesc;
-		if (move.basePowerCallback) Moves[id].basePowerCallback = true;
+	for (const lang of LANGUAGES) {
+		const Moves = requireNoCache('../caches/pokemon-showdown/dist/data/moves.js').Moves;
+
+		let MovesText = null;
+		try {
+			if (lang !== DEFAULT_LANGUAGE) {
+				MovesText = requireNoCache(`../caches/pokemon-showdown/dist/data/text/${lang}/moves.js`).MovesText;
+			}
+		} catch {
+			console.log(`No moves text found for ${lang}, using English`);
+		}
+
+		for (const id in Moves) {
+			const move = Dex.moves.get(Moves[id].name);
+			if (move.desc) Moves[id].desc = move.desc;
+			if (move.shortDesc) Moves[id].shortDesc = move.shortDesc;
+			if (move.basePowerCallback) Moves[id].basePowerCallback = true;
+
+			if (MovesText) {
+				const textEntry = MovesText[id];
+				if (textEntry) {
+					if (textEntry.name) Moves[id].name = textEntry.name;
+					if (textEntry.desc) Moves[id].desc = textEntry.desc;
+					if (textEntry.shortDesc) Moves[id].shortDesc = textEntry.shortDesc;
+				}
+			}
+		}
+		const buf = 'exports.BattleMovedex = ' + es3stringify(Moves) + ';';
+
+		if (lang === DEFAULT_LANGUAGE) {
+			fs.writeFileSync('play.pokemonshowdown.com/data/moves.js', buf);
+			fs.writeFileSync('play.pokemonshowdown.com/data/moves.json', JSON.stringify(Moves));
+		} else {
+			const langDir = `play.pokemonshowdown.com/data/${lang}`;
+			if (!fs.existsSync(langDir)) {
+				fs.mkdirSync(langDir, { recursive: true });
+			}
+			fs.writeFileSync(`play.pokemonshowdown.com/data/${lang}/moves.js`, buf);
+		}
 	}
-	const buf = 'exports.BattleMovedex = ' + es3stringify(Moves) + ';';
-	fs.writeFileSync('play.pokemonshowdown.com/data/moves.js', buf);
-	fs.writeFileSync('play.pokemonshowdown.com/data/moves.json', JSON.stringify(Moves));
 }
 
 /*********************************************************
@@ -1367,14 +1428,44 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
  *********************************************************/
 
 {
-	const Items = requireNoCache('../caches/pokemon-showdown/dist/data/items.js').Items;
-	for (const id in Items) {
-		const item = Dex.items.get(Items[id].name);
-		if (item.desc) Items[id].desc = item.desc;
-		if (item.shortDesc) Items[id].shortDesc = item.shortDesc;
+	for (const lang of LANGUAGES) {
+		const Items = requireNoCache('../caches/pokemon-showdown/dist/data/items.js').Items;
+
+		let ItemsText = null;
+		try {
+			if (lang !== DEFAULT_LANGUAGE) {
+				ItemsText = requireNoCache(`../caches/pokemon-showdown/dist/data/text/${lang}/items.js`).ItemsText;
+			}
+		} catch {
+			console.log(`No items text found for ${lang}, using English`);
+		}
+
+		for (const id in Items) {
+			const item = Dex.items.get(Items[id].name);
+			if (item.desc) Items[id].desc = item.desc;
+			if (item.shortDesc) Items[id].shortDesc = item.shortDesc;
+
+			if (ItemsText) {
+				const textEntry = ItemsText[id];
+				if (textEntry) {
+					if (textEntry.name) Items[id].name = textEntry.name;
+					if (textEntry.desc) Items[id].desc = textEntry.desc;
+					if (textEntry.shortDesc) Items[id].shortDesc = textEntry.shortDesc;
+				}
+			}
+		}
+		const buf = 'exports.BattleItems = ' + es3stringify(Items) + ';';
+
+		if (lang === DEFAULT_LANGUAGE) {
+			fs.writeFileSync('play.pokemonshowdown.com/data/items.js', buf);
+		} else {
+			const langDir = `play.pokemonshowdown.com/data/${lang}`;
+			if (!fs.existsSync(langDir)) {
+				fs.mkdirSync(langDir, { recursive: true });
+			}
+			fs.writeFileSync(`play.pokemonshowdown.com/data/${lang}/items.js`, buf);
+		}
 	}
-	const buf = 'exports.BattleItems = ' + es3stringify(Items) + ';';
-	fs.writeFileSync('play.pokemonshowdown.com/data/items.js', buf);
 }
 
 /*********************************************************
@@ -1382,14 +1473,44 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
  *********************************************************/
 
 {
-	const Abilities = requireNoCache('../caches/pokemon-showdown/dist/data/abilities.js').Abilities;
-	for (const id in Abilities) {
-		const ability = Dex.abilities.get(Abilities[id].name);
-		if (ability.desc) Abilities[id].desc = ability.desc;
-		if (ability.shortDesc) Abilities[id].shortDesc = ability.shortDesc;
+	for (const lang of LANGUAGES) {
+		const Abilities = requireNoCache('../caches/pokemon-showdown/dist/data/abilities.js').Abilities;
+
+		let AbilitiesText = null;
+		try {
+			if (lang !== DEFAULT_LANGUAGE) {
+				AbilitiesText = requireNoCache(`../caches/pokemon-showdown/dist/data/text/${lang}/abilities.js`).AbilitiesText;
+			}
+		} catch {
+			console.log(`No abilities text found for ${lang}, using English`);
+		}
+
+		for (const id in Abilities) {
+			const ability = Dex.abilities.get(Abilities[id].name);
+			if (ability.desc) Abilities[id].desc = ability.desc;
+			if (ability.shortDesc) Abilities[id].shortDesc = ability.shortDesc;
+
+			if (AbilitiesText) {
+				const textEntry = AbilitiesText[id];
+				if (textEntry) {
+					if (textEntry.name) Abilities[id].name = textEntry.name;
+					if (textEntry.desc) Abilities[id].desc = textEntry.desc;
+					if (textEntry.shortDesc) Abilities[id].shortDesc = textEntry.shortDesc;
+				}
+			}
+		}
+		const buf = 'exports.BattleAbilities = ' + es3stringify(Abilities) + ';';
+
+		if (lang === DEFAULT_LANGUAGE) {
+			fs.writeFileSync('play.pokemonshowdown.com/data/abilities.js', buf);
+		} else {
+			const langDir = `play.pokemonshowdown.com/data/${lang}`;
+			if (!fs.existsSync(langDir)) {
+				fs.mkdirSync(langDir, { recursive: true });
+			}
+			fs.writeFileSync(`play.pokemonshowdown.com/data/${lang}/abilities.js`, buf);
+		}
 	}
-	const buf = 'exports.BattleAbilities = ' + es3stringify(Abilities) + ';';
-	fs.writeFileSync('play.pokemonshowdown.com/data/abilities.js', buf);
 }
 
 /*********************************************************
@@ -1448,7 +1569,6 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
  *********************************************************/
 
 {
-	const LANGUAGES = ['en', 'es'];
 	const allTextData = Dex.loadTextData();
 
 	for (const lang of LANGUAGES) {
@@ -1476,7 +1596,16 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
 		for (const id in textData.Pokedex) assignData(id, textData.Pokedex[id]);
 
 		const buf = 'exports.BattleText = ' + es3stringify(Text) + ';';
-		fs.writeFileSync(`play.pokemonshowdown.com/data/text-${lang}.js`, buf);
+
+		if (lang === DEFAULT_LANGUAGE) {
+			fs.writeFileSync('play.pokemonshowdown.com/data/text.js', buf);
+		} else {
+			const langDir = `play.pokemonshowdown.com/data/${lang}`;
+			if (!fs.existsSync(langDir)) {
+				fs.mkdirSync(langDir, { recursive: true });
+			}
+			fs.writeFileSync(`${langDir}/text.js`, buf);
+		}
 	}
 }
 
