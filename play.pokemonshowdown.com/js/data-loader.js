@@ -26,8 +26,22 @@ exports.BattleDataLoader = (function() {
         items: false
     };
     var pendingCallbacks = [];
-    
-    function getPreferredLanguage() {
+      function getPreferredLanguage() {
+        if (window.app && window.app.user) {
+            var userSettings = window.app.user.get('settings');
+            if (userSettings && userSettings.language) {
+                var userLang = userSettings.language;
+                var languageMap = {
+                    'english': 'en',
+                    'spanish': 'es'
+                };
+                var langCode = languageMap[userLang.toLowerCase()] || userLang;
+                if (AVAILABLE_LANGUAGES.indexOf(langCode) >= 0) {
+                    return langCode;
+                }
+            }
+        }
+        
         if (Storage && Storage.prefs) {
             var storedLang = Storage.prefs(LANGUAGE_PREF_KEY);
             if (storedLang && AVAILABLE_LANGUAGES.indexOf(storedLang) >= 0) {
@@ -178,10 +192,26 @@ exports.BattleDataLoader = (function() {
             loadAllData(runCallbacks);
         }
     };
+      // Initialize data loading
+    function initializeDataLoader() {
+        var initialLanguage = getPreferredLanguage();
+        api.setLanguage(initialLanguage);
+    }
     
-    var initialLanguage = getPreferredLanguage();
-    
-    api.setLanguage(initialLanguage);
+    // If app is already available, initialize immediately
+    if (window.app && window.app.user) {
+        initializeDataLoader();
+    } else {
+        // Wait for app to be available
+        var checkAppReady = function() {
+            if (window.app && window.app.user) {
+                initializeDataLoader();
+            } else {
+                setTimeout(checkAppReady, 100);
+            }
+        };
+        setTimeout(checkAppReady, 100);
+    }
     
     return api;
 })();
