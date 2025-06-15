@@ -15,6 +15,8 @@ import { BattleLog } from "./battle-log";
 import { Move, BattleNatures } from "./battle-dex-data";
 import { BattleTextParser } from "./battle-text-parser";
 
+declare const BattleText: any;
+
 class ModifiableValue {
 	value = 0;
 	maxValue = 0;
@@ -47,26 +49,25 @@ class ModifiableValue {
 	tryItem(itemName: string) {
 		if (itemName !== this.itemName) return false;
 		if (this.battle.hasPseudoWeather('Magic Room')) {
-			this.comment.push(` (${itemName} suppressed by Magic Room)`);
+			this.comment.push(BattleText.default.tooltipSuppressedByMagicRoom.replace('[ITEM]', itemName));
 			return false;
 		}
 		if (this.pokemon?.volatiles['embargo']) {
-			this.comment.push(` (${itemName} suppressed by Embargo)`);
+			this.comment.push(BattleText.default.tooltipSuppressedByEmbargo.replace('[ITEM]', itemName));
 			return false;
 		}
 		const ignoreKlutz = [
 			"Macho Brace", "Power Anklet", "Power Band", "Power Belt", "Power Bracer", "Power Lens", "Power Weight",
 		];
 		if (this.tryAbility('Klutz') && !ignoreKlutz.includes(itemName)) {
-			this.comment.push(` (${itemName} suppressed by Klutz)`);
+			this.comment.push(BattleText.default.tooltipSuppressedByKlutz.replace('[ITEM]', itemName));
 			return false;
 		}
 		return true;
-	}
-	tryAbility(abilityName: string) {
+	}	tryAbility(abilityName: string) {
 		if (abilityName !== this.abilityName) return false;
 		if (this.pokemon?.volatiles['gastroacid']) {
-			this.comment.push(` (${abilityName} suppressed by Gastro Acid)`);
+			this.comment.push(BattleText.default.tooltipSuppressedByGastroAcid.replace('[ABILITY]', abilityName));
 			return false;
 		}
 		// Check for Neutralizing Gas
@@ -80,7 +81,8 @@ class ModifiableValue {
 		for (const side of this.battle.sides) {
 			for (const active of side.active) {
 				if (active && ['Air Lock', 'Cloud Nine'].includes(active.ability)) {
-					this.comment.push(` (${weatherName} suppressed by ${active.ability})`);
+					this.comment.push(BattleText.default.tooltipSuppressedByWeatherAbility
+						.replace('[WEATHER]', weatherName).replace('[ABILITY]', active.ability));
 					return false;
 				}
 			}
@@ -110,7 +112,8 @@ class ModifiableValue {
 			this.maxValue = 0;
 			return true;
 		}
-		if (name) this.comment.push(` (${this.round(factor)}&times; from ${name})`);
+		if (name) this.comment.push(BattleText.default.tooltipModifierFrom
+			.replace('[FACTOR]', this.round(factor).toString()).replace('[SOURCE]', name));
 		this.value *= factor;
 		if (!(name === 'Technician' && this.maxValue > 60)) this.maxValue *= factor;
 		if (this.battle.tier.includes('Super Staff Bros') &&
@@ -657,7 +660,7 @@ export class BattleTooltips {
 		if (!showingMultipleBasePowers && category !== 'Status') {
 			let activeTarget = foeActive[0] || foeActive[1] || foeActive[2];
 			value = this.getMoveBasePower(move, moveType, value, activeTarget);
-			text += `<p>Base power: ${value}</p>`;
+			text += `<p>${BattleText.default.tooltipBasePower.replace('[POWER]', value)}</p>`;
 		}
 
 		let accuracy = this.getMoveAccuracy(move, value);
@@ -685,11 +688,11 @@ export class BattleTooltips {
 				calls = 'Swift';
 			}
 			let calledMove = this.battle.dex.moves.get(calls);
-			text += `Calls ${Dex.getTypeIcon(this.getMoveType(calledMove, value)[0])} ${calledMove.name}`;
+			text += `${BattleText.default.tooltipCalls} ${Dex.getTypeIcon(this.getMoveType(calledMove, value)[0])} ${calledMove.name}`;
 		}
 
-		text += `<p>Accuracy: ${accuracy}</p>`;
-		if (zEffect) text += `<p>Z-Effect: ${zEffect}</p>`;
+		text += `<p>${BattleText.default.tooltipAccuracy.replace('[ACCURACY]', accuracy)}</p>`;
+		if (zEffect) text += `<p>${BattleText.default.tooltipZEffect.replace('[EFFECT]', zEffect)}</p>`;
 
 		if (this.battle.hardcoreMode) {
 			text += `<p class="tooltip-section">${move.shortDesc}</p>`;
@@ -814,7 +817,7 @@ export class BattleTooltips {
 
 			if (clientPokemon?.volatiles.formechange) {
 				if (clientPokemon.volatiles.transform) {
-					text += `<small>(Transformed into ${clientPokemon.volatiles.formechange[1]})</small><br />`;
+					text += `<small>${BattleText.default.tooltipTransformedInto.replace('[FORME]', clientPokemon.volatiles.formechange[1])}</small><br />`;
 				} else {
 					text += `<small>(Changed forme: ${clientPokemon.volatiles.formechange[1]})</small><br />`;
 				}
@@ -824,52 +827,50 @@ export class BattleTooltips {
 			let knownPokemon = serverPokemon || clientPokemon!;
 
 			if (pokemon.terastallized) {
-				text += `<small>(Terastallized)</small><br />`;
+				text += `<small>(${BattleText.default.tooltipTerastallized})</small><br />`;
 			} else if (clientPokemon?.volatiles.typechange || clientPokemon?.volatiles.typeadd) {
-				text += `<small>(Type changed)</small><br />`;
+				text += `<small>(${BattleText.default.tooltipTypeChanged})</small><br />`;
 			}
 			text += `<span class="textaligned-typeicons">${types.map(type => Dex.getTypeIcon(type)).join(' ')}</span>`;
 			if (pokemon.terastallized) {
-				text += `&nbsp; &nbsp; <small>(base: <span class="textaligned-typeicons">${this.getPokemonTypes(pokemon, true).map(type => Dex.getTypeIcon(type)).join(' ')}</span>)</small>`;
+				text += `&nbsp; &nbsp; <small>(${BattleText.default.tooltipBase} <span class="textaligned-typeicons">${this.getPokemonTypes(pokemon, true).map(type => Dex.getTypeIcon(type)).join(' ')}</span>)</small>`;
 			} else if (knownPokemon.teraType && !this.battle.rules['Terastal Clause']) {
-				text += `&nbsp; &nbsp; <small>(Tera Type: <span class="textaligned-typeicons">${Dex.getTypeIcon(knownPokemon.teraType)}</span>)</small>`;
+				text += `&nbsp; &nbsp; <small>(${BattleText.default.tooltipTeraType} <span class="textaligned-typeicons">${Dex.getTypeIcon(knownPokemon.teraType)}</span>)</small>`;
 			}
 			text += `</h2>`;
 		}
 
 		if (illusionIndex) {
-			text += `<p class="tooltip-section"><strong>Possible Illusion #${illusionIndex}</strong>${levelBuf}</p>`;
+			text += `<p class="tooltip-section"><strong>${BattleText.default.tooltipPossibleIllusion.replace('[INDEX]', illusionIndex)}</strong>${levelBuf}</p>`;
 		}
-
 		if (pokemon.fainted) {
-			text += '<p><small>HP:</small> (fainted)</p>';
+			text += `<p><small>${BattleText.default.tooltipHP}</small> (${BattleText.default.tooltipFainted})</p>`;
 		} else if (this.battle.hardcoreMode) {
 			if (serverPokemon) {
 				const status = pokemon.status ? ` <span class="status ${pokemon.status}">${pokemon.status.toUpperCase()}</span>` : '';
-				text += `<p><small>HP:</small> ${serverPokemon.hp}/${serverPokemon.maxhp}${status}</p>`;
+				text += `<p><small>${BattleText.default.tooltipHP}</small> ${serverPokemon.hp}/${serverPokemon.maxhp}${status}</p>`;
 			}
 		} else {
 			let exacthp = '';
 			if (serverPokemon) {
 				exacthp = ` (${serverPokemon.hp}/${serverPokemon.maxhp})`;
 			} else if (pokemon.maxhp === 48) {
-				exacthp = ` <small>(${pokemon.hp}/${pokemon.maxhp} pixels)</small>`;
+				exacthp = ` <small>${BattleText.default.tooltipPixelsHP.replace('[HP]', pokemon.hp).replace('[MAXHP]', pokemon.maxhp)}</small>`;
 			}
 			const status = pokemon.status ? ` <span class="status ${pokemon.status}">${pokemon.status.toUpperCase()}</span>` : '';
-			text += `<p><small>HP:</small> ${Pokemon.getHPText(pokemon, this.battle.reportExactHP)}${exacthp}${status}`;
+			text += `<p><small>${BattleText.default.tooltipHP}</small> ${Pokemon.getHPText(pokemon, this.battle.reportExactHP)}${exacthp}${status}`;
 			if (clientPokemon) {
 				if (pokemon.status === 'tox') {
 					if (pokemon.ability === 'Poison Heal' || pokemon.ability === 'Magic Guard') {
-						text += ` <small>Would take if ability removed: ${Math.floor(
-							100 / 16 * Math.min(clientPokemon.statusData.toxicTurns + 1, 15)
-						)}%</small>`;
+						const damage = Math.floor(100 / 16 * Math.min(clientPokemon.statusData.toxicTurns + 1, 15));
+						text += ` <small>${BattleText.default.tooltipWouldTakeIfAbilityRemoved.replace('[DAMAGE]', damage)}</small>`;
 					} else {
-						text += ` Next damage: ${Math.floor(
+						text += ` ${BattleText.default.tooltipNextDamage.replace('[DAMAGE]', Math.floor(
 							100 / (clientPokemon.volatiles['dynamax'] ? 32 : 16) * Math.min(clientPokemon.statusData.toxicTurns + 1, 15)
-						)}%`;
+						))}`;
 					}
 				} else if (pokemon.status === 'slp') {
-					text += ` Turns asleep: ${clientPokemon.statusData.sleepTurns}`;
+					text += ` ${BattleText.default.tooltipTurnsAsleep.replace('[TURNS]', clientPokemon.statusData.sleepTurns)}`;
 				}
 			}
 			text += '</p>';
@@ -889,25 +890,29 @@ export class BattleTooltips {
 			let item = '';
 			let itemEffect = '';
 			if (clientPokemon?.prevItem) {
-				item = 'None';
+				item = BattleText.default.tooltipNone;
 				let prevItem = this.battle.dex.items.get(clientPokemon.prevItem).name;
-				itemEffect += clientPokemon.prevItemEffect ? prevItem + ' was ' + clientPokemon.prevItemEffect : 'was ' + prevItem;
+				itemEffect += clientPokemon.prevItemEffect ?
+					BattleText.default.tooltipItemWas.replace('[ITEM]', prevItem).replace('[EFFECT]', clientPokemon.prevItemEffect) :
+					BattleText.default.tooltipWas.replace('[ITEM]', prevItem);
 			}
 			if (serverPokemon.item) item = this.battle.dex.items.get(serverPokemon.item).name;
 			if (itemEffect) itemEffect = ' (' + itemEffect + ')';
-			if (item) itemText = '<small>Item:</small> ' + item + itemEffect;
+			if (item) itemText = `<small>${BattleText.default.tooltipItem}</small> ` + item + itemEffect;
 		} else if (clientPokemon) {
 			let item = '';
 			let itemEffect = clientPokemon.itemEffect || '';
 			if (clientPokemon.prevItem) {
-				item = 'None';
+				item = BattleText.default.tooltipNone;
 				if (itemEffect) itemEffect += '; ';
 				let prevItem = this.battle.dex.items.get(clientPokemon.prevItem).name;
-				itemEffect += clientPokemon.prevItemEffect ? prevItem + ' was ' + clientPokemon.prevItemEffect : 'was ' + prevItem;
+				itemEffect += clientPokemon.prevItemEffect ?
+					BattleText.default.tooltipItemWas.replace('[ITEM]', prevItem).replace('[EFFECT]', clientPokemon.prevItemEffect) :
+					BattleText.default.tooltipWas.replace('[ITEM]', prevItem);
 			}
 			if (pokemon.item) item = this.battle.dex.items.get(pokemon.item).name;
 			if (itemEffect) itemEffect = ' (' + itemEffect + ')';
-			if (item) itemText = '<small>Item:</small> ' + item + itemEffect;
+			if (item) itemText = `<small>${BattleText.default.tooltipItem}</small> ` + item + itemEffect;
 		}
 
 		if (abilityText || itemText) {
@@ -952,13 +957,13 @@ export class BattleTooltips {
 				const move = this.battle.dex.moves.get(moveName);
 				return !move.isZ && !move.isMax && move.name !== 'Mimic';
 			}).length > 4) {
-				text += `(More than 4 moves is usually a sign of Illusion Zoroark/Zorua.) `;
+				text += BattleText.default.tooltipMoreThanFourMoves;
 			}
 			if (this.battle.gen === 3) {
-				text += `(Pressure is not visible in Gen 3, so in certain situations, more PP may have been lost than shown here.) `;
+				text += BattleText.default.tooltipPressureGen3;
 			}
 			if (this.pokemonHasClones(clientPokemon)) {
-				text += `(Your opponent has two indistinguishable Pokémon, making it impossible for you to tell which one has which moves/ability/item.) `;
+				text += BattleText.default.tooltipIndistinguishablePokemon;
 			}
 			text += `</p>`;
 		}
@@ -1453,7 +1458,7 @@ export class BattleTooltips {
 		if (ppUsed || moveName.startsWith('*')) {
 			return `${bullet} ${move.name} <small>(${maxpp - ppUsed}/${maxpp})</small>`;
 		}
-		return `${bullet} ${move.name} ${showKnown ? ' <small>(revealed)</small>' : ''}`;
+		return `${bullet} ${move.name} ${showKnown ? ` <small>${BattleText.default.tooltipRevealed}</small>` : ''}`;
 	}
 
 	ppUsed(move: Dex.Move, pokemon: Pokemon) {
@@ -2509,13 +2514,17 @@ export class BattleTooltips {
 		if (!isActive) {
 			// for switch tooltips, only show the original ability
 			const ability = abilityData.baseAbility || abilityData.ability;
-			if (ability) text = '<small>Ability:</small> ' + this.battle.dex.abilities.get(ability).name;
+			if (ability) {
+				text = `<small>${BattleText.default.tooltipAbility}</small> ` + this.battle.dex.abilities.get(ability).name;
+			}
 		} else {
 			if (abilityData.ability) {
 				const abilityName = this.battle.dex.abilities.get(abilityData.ability).name;
-				text = '<small>Ability:</small> ' + abilityName;
+				text = `<small>${BattleText.default.tooltipAbility}</small> ` + abilityName;
 				const baseAbilityName = this.battle.dex.abilities.get(abilityData.baseAbility).name;
-				if (baseAbilityName && baseAbilityName !== abilityName) text += ' (base: ' + baseAbilityName + ')';
+				if (baseAbilityName && baseAbilityName !== abilityName) {
+					text += ` (${BattleText.default.tooltipBase} ` + baseAbilityName + ')';
+				}
 			}
 		}
 		const tier = this.battle.tier;
